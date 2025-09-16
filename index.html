@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Looping Timer with Sound</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #111;
+      color: #eee;
+      padding-top: 50px;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    #timer {
+      font-size: 4em;
+      margin: 20px 0;
+    }
+    #phase {
+      font-size: 1.5em;
+      color: #0ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Looping Timer</h1>
+  <div id="phase">Starting...</div>
+  <div id="timer">00:00</div>
+
+  <script>
+    const timerDisplay = document.getElementById("timer");
+    const phaseDisplay = document.getElementById("phase");
+
+    const phases = [
+      { name: "Short Segment", duration: 6 },
+      { name: "Countdown", duration: 4 },
+      { name: "Long Segment", duration: 60 },
+      { name: "Countdown", duration: 4 }
+    ];
+
+    let currentPhase = 0;
+    let timeLeft = phases[currentPhase].duration;
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function updateDisplay() {
+      phaseDisplay.textContent = phases[currentPhase].name;
+      timerDisplay.textContent = formatTime(timeLeft);
+    }
+
+    function nextPhase() {
+      currentPhase = (currentPhase + 1) % phases.length;
+      timeLeft = phases[currentPhase].duration;
+    }
+
+    function playBeep() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, ctx.currentTime); // A5
+      gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + 0.2); // short beep
+    }
+
+    function tick() {
+      if (timeLeft > 0) {
+        timeLeft--;
+
+        // Play beep if in countdown phase
+        if (phases[currentPhase].name === "Countdown") {
+          playBeep();
+        }
+      } else {
+        nextPhase();
+      }
+      updateDisplay();
+    }
+
+    updateDisplay();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>
